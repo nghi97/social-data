@@ -24,7 +24,6 @@ defusedxml==0.6.0
 entrypoints==0.3
 enum-compat==0.0.3
 et-xmlfile==1.0.1
-Fiona==1.8.17
 geopandas==0.8.1
 gitdb==4.0.5
 GitPython==3.1.11
