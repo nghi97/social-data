@@ -50,7 +50,6 @@ def county_data_explorer():
         temp.reset_index(inplace=True)
         temp.drop(['geom'], inplace=True, axis=1)
         visualization.make_chart(temp, single_feature)
-
         counties = temp['County Name'].to_list()
         if task != 'National':
             geo_df = queries.get_county_geoms(counties, state.lower())
@@ -138,8 +137,6 @@ def census_data_explorer():
         geo_df = df.copy()
         df.drop(['geom'], inplace=True, axis=1)
         visualization.make_census_chart(df, single_feature)
-
-        # geo_df = df.copy()
         geo_df = geo_df[['geom', 'Census Tract', 'tract_id']]
 
         visualization.make_map(geo_df, df, single_feature)
