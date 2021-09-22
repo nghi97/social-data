@@ -34,9 +34,12 @@ def county_data_explorer():
     if df is not None:
         if st.checkbox('Show raw data'):
             st.subheader('Raw Data')
-            st.caption(str(df.shape))
-            st.dataframe(df)
+            tmp_df=df.copy()
+            tmp_df['geom']=tmp_df['geom'].astype(str)
+            st.caption(str(tmp_df.shape))
+            st.dataframe(tmp_df)
             st.markdown(utils.get_table_download_link(df, name, 'Download raw data'), unsafe_allow_html=True)
+            st.download_button('Download raw data',utils.to_excel(df), file_name=f'{name}.xlsx')
 
         feature_labels = list(set(df.columns) - {'County Name', 'county_id'})
         feature_labels.sort()
@@ -48,7 +51,7 @@ def county_data_explorer():
         single_feature = st.selectbox('Feature', feature_labels, 0)
         temp = df.copy()
         temp.reset_index(inplace=True)
-        temp.drop(['geom'], inplace=True, axis=1)
+        # temp.drop(['geom'], inplace=True, axis=1)
         visualization.make_chart(temp, single_feature)
         counties = temp['County Name'].to_list()
         if task != 'National':
@@ -62,7 +65,7 @@ def county_data_explorer():
             ### Compare Features
             Select two features to compare on the X and Y axes. Only numerical data can be compared.
             ''')
-        col1, col2, col3 = st.beta_columns(3)
+        col1, col2, col3 = st.columns(3)
         with col1:
             feature_1 = st.selectbox('X Feature', feature_labels, 0)
         with col2:
@@ -110,9 +113,11 @@ def census_data_explorer():
 
         if st.checkbox('Show raw data'):
             st.subheader('Raw Data')
-            st.caption(str(df.shape))
-            st.dataframe(df)
-            st.markdown(utils.get_table_download_link(df, state + '_data', 'Download raw data'), unsafe_allow_html=True)
+            tmp_df=df.copy()
+            st.caption(str(tmp_df.shape))
+            tmp_df['geom']=tmp_df['geom'].astype(str)
+            st.dataframe(tmp_df)
+            st.download_button('Download raw data',utils.to_excel(df), file_name=f'{state}_data.xlsx')
         if 'state_name' in df.columns:
             df = df.loc[:, ~df.columns.duplicated()]
             df['State'] = df['state_name']
@@ -120,11 +125,6 @@ def census_data_explorer():
             df = df.loc[:, ~df.columns.duplicated()]
             df['County Name'] = df['county_name']
         df.set_index(['State', 'County Name'], drop=True, inplace=True)
-
-        # get column with data type, if data type == string, count uniques, apply to column encoding function...can be arbitrary:
-        # ie len(x)
-
-
         feature_labels = list(
             set(df.columns) - {'County Name', 'county_id', 'index', 'county_name', 'Census Tract', 'geom',
                                'state_id', 'state_name', 'tract', 'tract_id'})
@@ -137,23 +137,23 @@ def census_data_explorer():
         geo_df = df.copy()
         df.drop(['geom'], inplace=True, axis=1)
         visualization.make_census_chart(df, single_feature)
+
         geo_df = geo_df[['geom', 'Census Tract', 'tract_id']]
-
         visualization.make_map(geo_df, df, single_feature)
-
-        st.write('''
-            ### Compare Features
-            Select two features to compare on the X and Y axes. Only numerical data can be compared.
-            ''')
-        col1, col2, col3 = st.beta_columns(3)
-        with col1:
-            feature_1 = st.selectbox('X Feature', feature_labels, 0)
-        with col2:
-            feature_2 = st.selectbox('Y Feature', feature_labels, 1)
-        with col3:
-            scaling_feature = st.selectbox('Scaling Feature', feature_labels, len(feature_labels)-1)
-        if feature_1 and feature_2:
-            visualization.make_scatter_plot_census_tracts(df, feature_1, feature_2, scaling_feature)
+        if len(feature_labels)>2:
+            st.write('''
+                ### Compare Features
+                Select two features to compare on the X and Y axes
+                ''')
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                feature_1 = st.selectbox('X Feature', feature_labels, 0)
+            with col2:
+                feature_2 = st.selectbox('Y Feature', feature_labels, 1)
+                with col3:
+                    scaling_feature = st.selectbox('Scaling Feature', feature_labels, len(feature_labels)-1)
+            if feature_1 and feature_2:
+                visualization.make_scatter_plot_census_tracts(df, feature_1, feature_2, scaling_feature)
 
         df.drop(list(set(df.columns) - set(feature_labels)), axis=1, inplace=True)
         display_columns = []
