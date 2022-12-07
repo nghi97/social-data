@@ -436,10 +436,14 @@ def make_transport_census_map(geo_df: pd.DataFrame, df: pd.DataFrame, map_featur
             get_fill_color='fill_color',
             stroked=False,
             opacity=0.15,
-            pickable=True,
+            pickable=False, #SHOULD BE TRUE
             auto_highlight=True,
         )
         layers = [polygon_layer]
+        
+        flood_layers = make_flood_layers(tracts_for_transit)
+        layers+=flood_layers
+    
 
         r = pdk.Deck(
             layers=layers,
@@ -671,4 +675,34 @@ def make_transit_layers(tract_df: pd.DataFrame, pickable: bool = True):
     return [
         line_layer,
         stop_layer
+    ]
+
+def make_flood_layers(tract_df: pd.DataFrame, pickable: bool = True):
+    # tracts = tract_df['Census Tract'].to_list()
+    # tracts_str = str(tuple(tracts)).replace(',)', ')')
+    flood_hazard_areas = gpd.read_file(r"C:\Users\Shannon.Millar\OneDrive - Arup\_Archive\Equity IiA\Flood risk\flood_hazard_areas.shp")
+    flood_hazard_areas = flood_hazard_areas[flood_hazard_areas['FLD_AR_ID'].str.contains("01021")] #filter data
+    if flood_hazard_areas.empty:
+        st.write("Flood hazard areas have not been identified for Equity Geographies in this region.")
+        line_layer = None
+    else:
+        # flood_hazard_areas['path'] = flood_hazard_areas['geometry'].apply(utils.coord_extractor)
+        # flood_hazard_areas.fillna("N/A", inplace=True)
+
+        polygon_layer = pdk.Layer(
+            "PolygonLayer",
+            data=flood_hazard_areas,
+            get_polygon="geometry",
+            # get_color='color',
+            # get_width=12,
+            # highlight_color=[176, 203, 156],
+            # picking_radius=6,
+            # auto_highlight=pickable,
+            # pickable=pickable,
+            # width_min_pixels=2,
+            # get_path="path"
+        )
+
+    return [
+        polygon_layer,
     ]
